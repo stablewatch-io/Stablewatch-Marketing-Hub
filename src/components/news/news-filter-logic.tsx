@@ -115,7 +115,7 @@ export function NewsFilterLogic({ onBack }: { onBack?: () => void }) {
                 <div className="-ml-15 flex-shrink-0">
                   <Button
                     variant="ghost"
-                    size="icon"
+                    size="sm"
                     onPress={onBack}
                     aria-label="Back"
                   >
