@@ -24,27 +24,27 @@ export function TwitterDraftsView() {
   }, [count, generate]);
 
   return (
-    <div className="flex-1 flex justify-center overflow-hidden bg-[var(--sw-bg)]">
+    <div className="flex-1 flex justify-center overflow-hidden bg-(--sw-bg)">
       <section className="w-full max-w-4xl flex flex-col px-8 py-8 overflow-hidden">
         {/* Header */}
         <div className="flex items-end justify-between mb-8">
           <div>
-            <h3 className=" text-2xl font-bold text-[var(--sw-text)] leading-tight">
+            <h3 className=" text-2xl font-bold text-(--sw-text) leading-tight">
               Draft Proposals
             </h3>
-            <p className="text-[var(--sw-text-secondary)] text-sm mt-1">
+            <p className="text-(--sw-text-secondary) text-sm mt-1">
               Review and approve AI-generated social content variations.
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
-            <span className="text-[10px] text-[var(--sw-text-muted)] font-bold uppercase tracking-widest mr-1">
+            <span className="text-[10px] text-(--sw-text-muted) font-bold uppercase tracking-widest mr-1">
               {drafts.length} Variations Ready
             </span>
-            <div className="flex items-center gap-3 bg-[var(--sw-bg-card)] p-1 rounded-xl border border-[var(--sw-border)]/10">
-              <label className="text-[10px] font-bold text-[var(--sw-text-muted)] uppercase tracking-widest pl-3">
+            <div className="flex items-center gap-3 bg-(--sw-bg-card) p-1 rounded-xl border border-(--sw-border)/10">
+              <label className="text-[10px] font-bold text-(--sw-text-muted) uppercase tracking-widest pl-3">
                 Posts to Generate:
               </label>
-              <div className="flex bg-white rounded-lg p-0.5 shadow-sm border border-[var(--sw-border)]/10">
+              <div className="flex bg-white rounded-lg p-0.5 shadow-sm border border-(--sw-border)/10">
                 {POST_COUNTS.map((c) => (
                   <Button
                     key={c}
@@ -53,8 +53,8 @@ export function TwitterDraftsView() {
                     onPress={() => setCount(c)}
                     className={`px-3 py-1.5 text-[10px] font-bold rounded-md ${
                       count === c
-                        ? "bg-[var(--sw-primary)] text-white"
-                        : "text-[var(--sw-text-muted)] hover:text-[var(--sw-primary)]"
+                        ? "bg-(--sw-primary) text-white"
+                        : "text-(--sw-text-muted) hover:text-(--sw-primary)"
                     }`}
                   >
                     {c}
@@ -84,7 +84,7 @@ export function TwitterDraftsView() {
               <Skeleton key={i} className="h-48 rounded-2xl" />
             ))
           ) : drafts.length === 0 ? (
-            <div className="bg-white rounded-2xl p-12 text-center text-sm text-[var(--sw-text-muted)]">
+            <div className="bg-white rounded-2xl p-12 text-center text-sm text-(--sw-text-muted)">
               No drafts yet. Click &ldquo;Re-create&rdquo; to generate your
               first batch.
             </div>

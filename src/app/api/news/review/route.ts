@@ -1,51 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireApproved } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
 export async function PATCH(request: NextRequest) {
-  const supabase = await createClient();
+  const auth = await requireApproved();
+  if (auth instanceof NextResponse) return auth;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const body = await request.json();
-  const { article_id, status, editorial_note } = body as {
-    article_id: string;
-    status: "approved" | "rejected";
-    editorial_note?: string;
-  };
+  const { article_id, status, notes } = await request.json();
 
   if (!article_id || !["approved", "rejected"].includes(status)) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid article_id or status" },
+      { status: 400 }
+    );
   }
 
-  const { data, error } = await supabase
+  const supabase = await createClient();
+
+  const { data: review, error: reviewError } = await supabase
     .from("news_reviews")
     .update({
       human_status: status,
-      reviewed_by: user.id,
+      reviewed_by: auth.user.id,
       reviewed_at: new Date().toISOString(),
     })
     .eq("article_id", article_id)
     .select()
     .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (reviewError) {
+    return NextResponse.json({ error: reviewError.message }, { status: 500 });
   }
 
-  // Save editorial note if provided (for RLHF feedback)
-  if (editorial_note?.trim()) {
-    await supabase.from("editorial_notes").insert({
-      article_id,
-      note: editorial_note,
-      created_by: user.id,
-    });
-  }
+  await supabase.from("editorial_feedback").insert({
+    article_id,
+    decision: status,
+    reason: notes ?? null,
+    decided_by: auth.user.id,
+    decided_at: new Date().toISOString(),
+  });
 
-  return NextResponse.json(data);
+  return NextResponse.json(review);
 }

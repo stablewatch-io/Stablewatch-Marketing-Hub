@@ -72,10 +72,10 @@ export function AppSidebar() {
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           <div>
-            <p className="text-sm font-semibold text-[var(--sw-text)]">
+            <p className="text-sm font-semibold text-(--sw-text)">
               {user?.name || "Loading..."}
             </p>
-            <p className="text-xs text-[var(--sw-text-muted)]">
+            <p className="text-xs text-(--sw-text-muted)">
               {user?.email || ""}
             </p>
           </div>
@@ -97,8 +97,8 @@ export function AppSidebar() {
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                   isActive
-                    ? "bg-[var(--sw-primary-light)] text-[var(--sw-primary)] font-semibold"
-                    : "text-[var(--sw-text)] hover:bg-[var(--sw-bg-card)]"
+                    ? "bg-(--sw-primary-light) text-(--sw-primary) font-semibold"
+                    : "text-(--sw-text) hover:bg-(--sw-bg-card)"
                 )}
               >
                 <item.icon className="size-5" />
@@ -112,7 +112,7 @@ export function AppSidebar() {
       <SidebarFooter>
         <button
           onClick={handleSignOut}
-          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--sw-text)] hover:bg-[var(--sw-bg-card)] transition-colors w-full"
+          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-(--sw-text) hover:bg-(--sw-bg-card) transition-colors w-full"
         >
           <LogOut className="size-5" />
           <span>Log out</span>

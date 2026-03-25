@@ -6,10 +6,11 @@ import { useSidebar } from "@/components/ui/sidebar";
 
 interface TopAppBarProps {
   title: string;
+  left?: React.ReactNode;
   children?: React.ReactNode;
 }
 
-export function TopAppBar({ title, children }: TopAppBarProps) {
+export function TopAppBar({ title, left, children }: TopAppBarProps) {
   const { isMobile, toggleSidebar } = useSidebar();
 
   return (
@@ -25,6 +26,7 @@ export function TopAppBar({ title, children }: TopAppBarProps) {
             <Menu className="size-5" />
           </Button>
         )}
+        {left}
         <h1 className="text-xl font-semibold text-[var(--sw-text)]">
           {title}
         </h1>

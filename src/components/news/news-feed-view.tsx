@@ -1,21 +1,21 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
-import { Button } from "@heroui/react";
+
+import { useState, useCallback, useEffect } from "react";
+import { Button, Tabs, Tab, TabList, TabListContainer, Badge } from "@heroui/react";
 import { useNews, useLatestJob } from "@/hooks/use-news";
 import { NewsItemCard } from "@/components/news/news-item-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-
-const TIME_RANGES = ["6h", "16h", "24h", "48h"] as const;
+import { Loader2 } from "lucide-react";
 
 export function NewsFeedView() {
-  const [range, setRange] = useState<string>("24h");
-  const [mode, setMode] = useState<"manual" | "auto">("manual");
+
+  const [activeTab, setActiveTab] = useState<string>("feed");
   const [fetching, setFetching] = useState(false);
-  const { articles, isLoading, mutate } = useNews("pending", range);
+  const { articles, isLoading, mutate } = useNews("pending");
+  const { articles: approvedArticles, mutate: mutateApproved } = useNews("approved");
   const { job } = useLatestJob();
-  const autoIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const handleReview = useCallback(
     async (
@@ -47,34 +47,54 @@ export function NewsFeedView() {
     setFetching(true);
     try {
       const res = await fetch("/api/news/aggregate", { method: "POST" });
-      if (!res.ok) throw new Error();
-      toast.success("Aggregation triggered — articles will appear shortly");
-      // Wait a bit then refresh
-      setTimeout(() => mutate(), 5000);
-    } catch {
-      toast.error("Failed to trigger aggregation");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Aggregation failed");
+      }
+      const result = await res.json();
+      const { fetched = 0, relevant = 0 } = result;
+      toast.success(
+        `Fetched ${fetched} article${fetched !== 1 ? "s" : ""}, ${relevant} relevant`
+      );
+      mutate();
+      mutateApproved();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to trigger aggregation");
     } finally {
       setFetching(false);
     }
-  }, [mutate]);
+  }, [mutate, mutateApproved]);
 
-  // Auto-fetch mode
+  // Fetch once on mount
   useEffect(() => {
-    if (mode === "auto") {
-      // Fetch immediately when entering auto mode
-      handleFetchNow();
-      // Then fetch every 10 minutes
-      autoIntervalRef.current = setInterval(handleFetchNow, 10 * 60 * 1000);
-    }
-    return () => {
-      if (autoIntervalRef.current) {
-        clearInterval(autoIntervalRef.current);
-        autoIntervalRef.current = null;
-      }
-    };
-  }, [mode, handleFetchNow]);
+    handleFetchNow();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const isJobRunning = job?.status === "running";
+
+  // Ready to publish view
+  const readyArticles = (approvedArticles ?? []).filter(
+    (a) => Array.isArray(a.news_reviews) && a.news_reviews.length > 0 && a.news_reviews[0]?.is_cleared === false
+  );
+
+  const handleClear = async (articleId: string) => {
+    await fetch("/api/news/clear", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ article_ids: [articleId] }),
+    });
+    mutateApproved();
+  };
+
+  const handleClearAll = async () => {
+    await fetch("/api/news/clear", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clear_all: true }),
+    });
+    mutateApproved();
+  };
 
   return (
     <div className="flex-1 flex justify-center overflow-hidden">
@@ -82,115 +102,122 @@ export function NewsFeedView() {
         {/* Header */}
         <div className="flex items-end justify-between">
           <div>
-            <h2 className=" text-2xl font-bold text-[var(--sw-text)] leading-tight">
-              Incoming News Feed
+            <h2 className=" text-2xl font-bold text-(--sw-text) leading-tight">
+              News
             </h2>
-            <p className="text-[var(--sw-text-secondary)] text-sm mt-1">
+            <p className="text-(--sw-text-secondary) text-sm mt-1">
               Review and curate raw news from your connected sources.
             </p>
           </div>
-          {/* Time range selector */}
-          <div className="flex items-center gap-3 bg-[var(--sw-bg-card)] p-1 rounded-xl">
-            {TIME_RANGES.map((r) => (
-              <Button
-                key={r}
-                size="sm"
-                variant={range === r ? "secondary" : "ghost"}
-                onPress={() => setRange(r)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-                  range === r
-                    ? "bg-white shadow-sm text-[var(--sw-primary)]"
-                    : "hover:bg-white/60 text-[var(--sw-text-muted)]"
-                }`}
-              >
-                {r}
-              </Button>
-            ))}
-          </div>
         </div>
 
-        {/* Source/Mode bar */}
-        <div className="flex items-center justify-between px-4 py-3 bg-white/50 rounded-xl border border-[var(--sw-border)]/10">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[var(--sw-text-muted)]">SOURCE:</span>
-              <span className="px-2 py-0.5 rounded bg-[#e2e2e2] text-[10px] font-bold">
-                ALL RSS
+        {/* Filter Logic Button removed as requested */}
+        <Tabs selectedKey={activeTab} onSelectionChange={(key) => setActiveTab(String(key))}>
+          <TabListContainer>
+            <TabList>
+              <Tab id="feed">News Feed</Tab>
+              <Tab id="ready">
+                Ready to publish
+                {readyArticles.length > 0 && (
+                  <Badge className="ml-2" color="accent">
+                    {readyArticles.length}
+                  </Badge>
+                )}
+              </Tab>
+            </TabList>
+          </TabListContainer>
+        </Tabs>
+
+        {activeTab === "feed" && (
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onPress={handleFetchNow}
+              isDisabled={fetching || isJobRunning}
+              className="flex items-center gap-2 text-(--sw-primary) hover:opacity-80 transition-opacity"
+            >
+              {(fetching || isJobRunning) ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <span className="material-symbols-outlined text-sm">refresh</span>
+              )}
+              <span className="text-xs font-bold">
+                {fetching ? "FETCHING..." : isJobRunning ? "PROCESSING..." : "FETCH NOW"}
               </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[var(--sw-text-muted)]">MODE:</span>
-              <Button
-                size="sm"
-                variant={mode === "manual" ? "primary" : "ghost"}
-                onPress={() => setMode("manual")}
-                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
-                  mode === "manual"
-                    ? "bg-[var(--sw-primary)] text-white"
-                    : "bg-[#e2e2e2] text-[var(--sw-text-muted)] hover:bg-[#d0d0d0]"
-                }`}
-              >
-                MANUAL
-              </Button>
-              <Button
-                size="sm"
-                variant={mode === "auto" ? "primary" : "ghost"}
-                onPress={() => setMode("auto")}
-                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
-                  mode === "auto"
-                    ? "bg-[var(--sw-primary)] text-white"
-                    : "bg-[#e2e2e2] text-[var(--sw-text-muted)] hover:bg-[#d0d0d0]"
-                }`}
-              >
-                AUTO-FETCH
-              </Button>
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onPress={handleFetchNow}
-            isDisabled={fetching || isJobRunning}
-            className="flex items-center gap-2 text-[var(--sw-primary)] hover:opacity-80 transition-opacity"
-          >
-            <span className={`material-symbols-outlined text-sm ${(fetching || isJobRunning) ? "animate-spin" : ""}`}>
-              refresh
-            </span>
-            <span className="text-xs font-bold">
-              {isJobRunning ? "FETCHING..." : fetching ? "TRIGGERING..." : "FETCH NOW"}
-            </span>
-          </Button>
-        </div>
+            </Button>
 
-        {/* Job status banner */}
-        {isJobRunning && (
-          <div className="px-4 py-2 bg-[var(--sw-primary-light)]/30 rounded-lg text-xs text-[var(--sw-primary)] font-medium flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm animate-spin">sync</span>
-            Aggregation job running — new articles will appear automatically...
-          </div>
+            {(fetching || isJobRunning) && (
+              <div className="px-4 py-3 bg-(--sw-primary-light)/30 rounded-lg text-xs text-(--sw-primary) font-medium flex items-center gap-2">
+                <Loader2 className="size-4 animate-spin" />
+                {fetching
+                  ? "Fetching and filtering articles — this may take a moment..."
+                  : "Aggregation job running — new articles will appear automatically..."}
+              </div>
+            )}
+
+            <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+              {isLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-48 rounded-xl" />
+                ))
+              ) : articles.length === 0 ? (
+                <div className="bg-white rounded-xl p-8 text-center text-sm text-(--sw-text-muted)">
+                  No articles found.
+                </div>
+              ) : (
+                articles.map((article) => (
+                  <NewsItemCard
+                    key={article.id}
+                    article={article}
+                    onApprove={(id, note) => handleReview(id, "approved", note)}
+                    onDiscard={(id, note) => handleReview(id, "rejected", note)}
+                  />
+                ))
+              )}
+            </div>
+          </>
         )}
 
-        {/* Article list */}
-        <div className="flex-1 overflow-y-auto pr-2 space-y-4">
-          {isLoading ? (
-            Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-48 rounded-xl" />
-            ))
-          ) : articles.length === 0 ? (
-            <div className="bg-white rounded-xl p-8 text-center text-sm text-[var(--sw-text-muted)]">
-              No articles found. Try fetching news or adjusting the time range.
+        {activeTab === "ready" && (
+          <>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-(--sw-primary)">Ready to publish</h3>
+              {readyArticles.length > 0 && (
+                <Button variant="outline" size="sm" onPress={handleClearAll}>
+                  Clear all
+                </Button>
+              )}
             </div>
-          ) : (
-            articles.map((article) => (
-              <NewsItemCard
-                key={article.id}
-                article={article}
-                onApprove={(id, note) => handleReview(id, "approved", note)}
-                onDiscard={(id, note) => handleReview(id, "rejected", note)}
-              />
-            ))
-          )}
-        </div>
+            <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+              {readyArticles.length === 0 ? (
+                <div className="bg-white rounded-xl p-8 text-center text-sm text-(--sw-text-muted)">
+                  No articles ready to publish.
+                </div>
+              ) : (
+                readyArticles.map((article) => (
+                  <div key={article.id} className="relative">
+                    <NewsItemCard
+                      article={article}
+                      onApprove={() => {}}
+                      onDiscard={() => {}}
+                    />
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="absolute top-4 right-4"
+                      onPress={() => handleClear(article.id)}
+                    >
+                      Done
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Filter Logic tab removed as per new design */}
       </section>
     </div>
   );

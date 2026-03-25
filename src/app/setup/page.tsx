@@ -397,45 +397,45 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--sw-bg)] p-8">
+    <div className="min-h-screen bg-(--sw-bg) p-8">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-[var(--sw-primary)] mb-2">
+        <h1 className="text-3xl font-bold text-(--sw-primary) mb-2">
           Stablewatch AI — Database Setup
         </h1>
-        <p className="text-[var(--sw-text-secondary)] mb-8">
+        <p className="text-(--sw-text-secondary) mb-8">
           The app needs database tables that don&apos;t exist yet. Follow these
           steps:
         </p>
 
         <div className="space-y-6">
           {/* Step 1 */}
-          <div className="bg-white rounded-xl p-6 border border-[var(--sw-border)]/20">
+          <div className="bg-white rounded-xl p-6 border border-(--sw-border)/20">
             <h2 className="font-bold text-lg mb-2">
               Step 1: Copy the SQL below
             </h2>
             <button
               onClick={handleCopy}
-              className="mb-4 px-4 py-2 bg-[var(--sw-primary)] text-white rounded-lg font-bold text-sm"
+              className="mb-4 px-4 py-2 bg-(--sw-primary) text-white rounded-lg font-bold text-sm"
             >
               {copied ? "Copied!" : "Copy SQL to Clipboard"}
             </button>
-            <pre className="bg-[var(--sw-text)] text-green-400 p-4 rounded-lg text-xs overflow-auto max-h-96">
+            <pre className="bg-(--sw-text) text-green-400 p-4 rounded-lg text-xs overflow-auto max-h-96">
               {MIGRATION_SQL}
             </pre>
           </div>
 
           {/* Step 2 */}
-          <div className="bg-white rounded-xl p-6 border border-[var(--sw-border)]/20">
+          <div className="bg-white rounded-xl p-6 border border-(--sw-border)/20">
             <h2 className="font-bold text-lg mb-2">
               Step 2: Paste into Supabase
             </h2>
-            <ol className="list-decimal list-inside space-y-2 text-sm text-[var(--sw-text-secondary)]">
+            <ol className="list-decimal list-inside space-y-2 text-sm text-(--sw-text-secondary)">
               <li>
                 Go to{" "}
                 <a
                   href="https://supabase.com/dashboard/project/jlpfhoqvixxpbdlrsgmn/sql/new"
                   target="_blank"
-                  className="text-[var(--sw-primary)] underline font-bold"
+                  className="text-(--sw-primary) underline font-bold"
                 >
                   Supabase SQL Editor
                 </a>
@@ -447,14 +447,14 @@ export default function SetupPage() {
           </div>
 
           {/* Step 3 */}
-          <div className="bg-white rounded-xl p-6 border border-[var(--sw-border)]/20">
+          <div className="bg-white rounded-xl p-6 border border-(--sw-border)/20">
             <h2 className="font-bold text-lg mb-2">
               Step 3: Verify & Seed Data
             </h2>
             <button
               onClick={handleCheck}
               disabled={checking}
-              className="px-4 py-2 bg-[var(--sw-primary)] text-white rounded-lg font-bold text-sm disabled:opacity-50"
+              className="px-4 py-2 bg-(--sw-primary) text-white rounded-lg font-bold text-sm disabled:opacity-50"
             >
               {checking ? "Checking..." : "Verify Database"}
             </button>
@@ -473,8 +473,8 @@ export default function SetupPage() {
           </div>
 
           {/* Done */}
-          <div className="bg-[var(--sw-primary)]/5 rounded-xl p-6 border border-[var(--sw-primary)]/10">
-            <p className="text-sm text-[var(--sw-primary)] font-bold">
+          <div className="bg-(--sw-primary)/5 rounded-xl p-6 border border-(--sw-primary)/10">
+            <p className="text-sm text-(--sw-primary) font-bold">
               Once verified, go to{" "}
               <a href="/" className="underline">
                 the dashboard

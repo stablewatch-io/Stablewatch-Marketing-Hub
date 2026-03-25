@@ -14,17 +14,22 @@ interface NewsArticle {
   source_name: string;
 }
 
-interface NewsItemCardProps {
+export interface NewsItemCardProps {
   article: NewsArticle;
   onApprove: (id: string, note?: string) => void;
   onDiscard: (id: string, note?: string) => void;
+  approveLabel?: string;
+  discardLabel?: string;
 }
 
-export function NewsItemCard({
-  article,
-  onApprove,
-  onDiscard,
-}: NewsItemCardProps) {
+export function NewsItemCard(props: NewsItemCardProps) {
+  const {
+    article,
+    onApprove,
+    onDiscard,
+    approveLabel = "Approve",
+    discardLabel = "Reject",
+  } = props;
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -51,33 +56,33 @@ export function NewsItemCard({
   }
 
   return (
-    <div className="bg-white rounded-xl p-6 transition-all hover:shadow-xl hover:shadow-[var(--sw-primary)]/5 group border-transparent border-l-4 hover:border-[var(--sw-primary)]">
+    <div className="bg-white rounded-xl p-6 transition-all hover:shadow-xl hover:shadow-(--sw-primary)/5 group">
       <div className="flex-1">
         <div className="flex justify-between items-start mb-2">
           <Chip
             size="sm"
-            className="text-[10px] font-bold text-[#416463] uppercase tracking-tighter bg-[var(--sw-primary-light)] px-2 py-0.5 rounded-full"
+            className="text-[10px] font-bold text-[#416463] uppercase tracking-tighter bg-(--sw-primary-light) px-2 py-0.5 rounded-full"
           >
             {article.source_name} &bull; {timeAgo}
           </Chip>
         </div>
-        <h3 className=" text-xl font-bold text-[var(--sw-text)] mb-2">
+        <h3 className=" text-xl font-bold text-(--sw-text) mb-2">
           {article.title}
         </h3>
         {article.summary && (
-          <p className="text-[var(--sw-text-secondary)] text-base leading-relaxed mb-6">
+          <p className="text-(--sw-text-secondary) text-base leading-relaxed mb-6">
             {article.summary}
           </p>
         )}
         <div className="grid grid-cols-2 gap-6 items-end">
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-[var(--sw-text-muted)] uppercase tracking-widest ml-1">
+            <label className="text-[10px] font-bold text-(--sw-text-muted) uppercase tracking-widest ml-1">
               Editorial Note / AI Feedback
             </label>
             <TextArea
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="w-full text-sm bg-[var(--sw-bg-card)] border-none rounded-lg p-3 focus:ring-1 focus:ring-[var(--sw-primary)]/20 min-h-[80px] resize-none"
+              className="w-full text-sm bg-(--sw-bg-card) border-none rounded-lg p-3 focus:ring-1 focus:ring-(--sw-primary)/20 min-h-20 resize-none"
               placeholder="Add internal context or correction notes here..."
             />
             {note && (
@@ -87,7 +92,7 @@ export function NewsItemCard({
                   size="sm"
                   onPress={handleSaveNote}
                   isDisabled={saving}
-                  className="text-[10px] font-bold text-[var(--sw-primary)] hover:underline flex items-center gap-1 uppercase"
+                  className="text-[10px] font-bold text-(--sw-primary) hover:underline flex items-center gap-1 uppercase"
                 >
                   <span className="material-symbols-outlined text-[14px]">
                     save
@@ -102,17 +107,17 @@ export function NewsItemCard({
               variant="secondary"
               size="md"
               onPress={() => onDiscard(article.id, note || undefined)}
-              className="px-6 py-2.5 text-xs font-bold bg-[#e2e2e2] text-[var(--sw-text)] rounded-lg hover:bg-[var(--sw-border)]/30 transition-colors uppercase"
+              className="px-6 py-2.5 text-xs font-bold bg-[#e2e2e2] text-(--sw-text) rounded-lg hover:bg-(--sw-border)/30 transition-colors uppercase"
             >
-              Discard Item
+              Reject
             </Button>
             <Button
               variant="primary"
               size="md"
               onPress={() => onApprove(article.id, note || undefined)}
-              className="px-8 py-2.5 text-xs font-bold bg-gradient-to-br from-[var(--sw-primary)] to-[var(--sw-primary-hover)] text-white rounded-lg shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all uppercase"
+              className="px-8 py-2.5 text-xs font-bold bg-linear-to-br from-(--sw-primary) to-(--sw-primary-hover) text-white rounded-lg shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all uppercase"
             >
-              Approve &amp; Publish
+              Approve
             </Button>
           </div>
         </div>

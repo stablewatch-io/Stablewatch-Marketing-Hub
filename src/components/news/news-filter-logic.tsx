@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Input, Chip } from "@heroui/react";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input, Chip } from "@heroui/react";
 import { useInstructions } from "@/hooks/use-instructions";
 import { useNewsSources } from "@/hooks/use-news-sources";
 import { MdEditor } from "@/components/shared/md-editor";
@@ -10,7 +12,7 @@ import { KnowledgeBasePanel } from "@/components/shared/knowledge-base-panel";
 import { SourceCard } from "@/components/news/source-card";
 import { toast } from "sonner";
 
-export function NewsFilterLogic() {
+export function NewsFilterLogic({ onBack }: { onBack?: () => void }) {
   const { instructions, activeInstruction, createVersion, setActive } =
     useInstructions("news", "news_filter");
   const { sources, isLoading: sourcesLoading, addSource, updateSource, removeSource } =
@@ -102,20 +104,32 @@ export function NewsFilterLogic() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-8 flex justify-center">
-      <div className="max-w-4xl w-full flex flex-col gap-10 py-4">
+    <div className="flex-1 overflow-y-auto p-8 flex flex-col items-stretch">
+      {/* Back Arrow */}
+      <div className="max-w-4xl w-full flex flex-col gap-10 py-4 self-center">
         {/* Section Header */}
-        <div className="flex items-end justify-between border-b border-[var(--sw-border)]/20 pb-8">
+        <div className="border-b border-[var(--sw-border)]/20 pb-8">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <span className="material-symbols-outlined text-[var(--sw-primary)] text-3xl">
-                filter_alt
-              </span>
-              <h2 className=" text-3xl font-bold text-[var(--sw-text)]">
-                News Filter Logic
-              </h2>
+            <div className="flex items-center mb-2">
+              {onBack && (
+                <div className="-ml-15 flex-shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onPress={onBack}
+                    aria-label="Back"
+                  >
+                    <ArrowLeft className="size-7 text-(--sw-primary)" />
+                  </Button>
+                </div>
+              )}
+              <div className="flex items-center gap-3 ml-0">
+                <h2 className="text-3xl font-bold text-[var(--sw-text)] text-left">
+                  News Filter Logic
+                </h2>
+              </div>
             </div>
-            <p className="text-[var(--sw-text-secondary)] text-sm">
+            <p className="text-[var(--sw-text-secondary)] text-sm text-left">
               Configure the AI rules and knowledge base that govern how incoming
               news is prioritized and filtered.
             </p>

@@ -17,19 +17,19 @@ export function ChannelDistribution({ stats, isLoading }: ChannelDistributionPro
       name: "Twitter / X",
       sub: "Primary Hub",
       icon: "campaign",
-      pct: stats?.channels.twitter ?? 0,
+      pct: stats?.channels?.twitter ?? 0,
     },
     {
       name: "Telegram",
       sub: "Communities",
       icon: "send",
-      pct: stats?.channels.telegram ?? 0,
+      pct: stats?.channels?.telegram ?? 0,
     },
     {
       name: "Other",
       sub: "Editorial",
       icon: "language",
-      pct: stats?.channels.other ?? 0,
+      pct: stats?.channels?.other ?? 0,
     },
   ];
 

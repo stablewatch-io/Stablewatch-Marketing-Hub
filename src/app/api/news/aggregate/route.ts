@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-
-const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL ?? "";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { runNewsPipeline } from "@/lib/news-pipeline";
 
 export async function GET() {
-  const supabase = await createClient();
+  const supabase = createServiceRoleClient();
 
   const { data: job } = await supabase
     .from("aggregation_jobs")
@@ -27,30 +27,33 @@ export async function POST() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Create a new aggregation job
-  const { data: job, error } = await supabase
+  // Debounce: skip if last completed job < 5 min ago
+  const serviceClient = createServiceRoleClient();
+  const { data: lastJob } = await serviceClient
     .from("aggregation_jobs")
-    .insert({
-      status: "running",
-      triggered_by: user.id,
-    })
-    .select()
+    .select("completed_at")
+    .eq("status", "completed")
+    .order("completed_at", { ascending: false })
+    .limit(1)
     .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (lastJob?.completed_at) {
+    const elapsed = Date.now() - new Date(lastJob.completed_at).getTime();
+    if (elapsed < 5 * 60 * 1000) {
+      return NextResponse.json({
+        skipped: true,
+        reason: "Last fetch was less than 5 minutes ago",
+      });
+    }
   }
 
-  // Fire n8n webhook (non-blocking)
-  if (N8N_WEBHOOK_URL) {
-    fetch(N8N_WEBHOOK_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ job_id: job.id }),
-    }).catch(() => {
-      // n8n webhook failure is non-fatal
-    });
+  try {
+    const result = await runNewsPipeline(user.id);
+    return NextResponse.json(result);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Pipeline failed" },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json(job);
 }

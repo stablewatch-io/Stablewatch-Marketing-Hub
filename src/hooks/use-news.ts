@@ -1,5 +1,19 @@
 import useSWR from "swr";
 
+export interface NewsReview {
+  id: string;
+  ai_relevant: boolean;
+  ai_score: number | null;
+  ai_reasoning: string | null;
+  ai_summary: string | null;
+  ai_category?: string | null;
+  human_status: "pending" | "approved" | "rejected";
+  is_cleared?: boolean;
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+  reviewer?: { display_name: string } | null;
+}
+
 export interface NewsArticle {
   id: string;
   title: string;
@@ -7,14 +21,8 @@ export interface NewsArticle {
   url: string;
   published_at: string | null;
   source_name: string;
-  review?: {
-    id: string;
-    ai_relevant: boolean;
-    ai_score: number | null;
-    ai_reasoning: string | null;
-    ai_summary: string | null;
-    human_status: "pending" | "approved" | "rejected";
-  };
+  news_reviews?: NewsReview[];
+  review?: NewsReview;
 }
 
 export interface AggregationJob {
@@ -33,10 +41,9 @@ const fetcher = async (url: string) => {
   return Array.isArray(data) ? data : [];
 };
 
-export function useNews(status?: string, range?: string) {
+export function useNews(status?: string) {
   const params = new URLSearchParams();
   if (status && status !== "all") params.set("status", status);
-  if (range) params.set("range", range);
   const qs = params.toString() ? `?${params}` : "";
 
   const { data, error, isLoading, mutate } = useSWR<NewsArticle[]>(
